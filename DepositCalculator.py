@@ -6,18 +6,16 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime
 import time
-import ctypes
 
-# Ֆունկցիա ֆորմատի ստուգման համար
+# Function for format checking
 def is_valid_date(date_str):
     try:
-        # Ստուգում ենք ամսաթվի ձևաչափը՝ օր/ամիս/տարի
         datetime.strptime(date_str, "%d/%m/%Y")
         return True
     except ValueError:
         return False
 
-# Ֆունկցիա ստուգելու համար, որ start_date-ը չի անցնում ներկայիս ամսաթվից
+# Function to check that start_date does not exceed the current date
 def is_valid_start_date(start_date_str):
     try:
         start_date = datetime.strptime(start_date_str, "%d/%m/%Y")
@@ -26,7 +24,7 @@ def is_valid_start_date(start_date_str):
     except ValueError:
         return False
 
-# Ֆունկցիա ստուգելու համար, որ end_date-ն լինի start_date-ից հետո
+# Function to check if end_date is after start_date
 def is_valid_end_date(start_date_str, end_date_str):
     try:
         start_date = datetime.strptime(start_date_str, "%d/%m/%Y")
@@ -35,93 +33,82 @@ def is_valid_end_date(start_date_str, end_date_str):
     except ValueError:
         return False
 
-# Համակարգչի օգտագործողից տվյալների մուտքագրում
+# Data entry from a computer user
 while True:
-    amount = input("Խնդրում ենք մուտքագրել ավանդի գումարը: ")
+    amount = input("Please enter the deposit amount: ")
 
-    # Ստուգում, որ գումարը պետք է լինի թվեր
     try:
         amount = float(amount)
     except ValueError:
-        print("Գումարը պետք է լինի թվով։ Խնդրում ենք փորձել նորից.")
+        print("The amount must be a number. Please try again.")
         continue
 
-    # Ստուգել start_date-ի մուտքը
     while True:
-        start_date = input("Խնդրում ենք մուտքագրել ավանդի սկիզբը (օր/ամիս/տարի): ")
+        start_date = input("Please enter the start date of the deposit (day/month/year): ")
         if not is_valid_date(start_date):
-            print("Սկիզբ ամսաթվը սխալ ֆորմատով է: Խնդրում ենք մուտքագրել ըստ ձևաչափի՝ օր/ամիս/տարի (օր/ամիս/տարի)")
+            print("The start date is in the wrong format. Please enter it in the format: day/month/year.")
         elif not is_valid_start_date(start_date):
-            print("Սկիզբ ամսաթվը պետք է լինի ներկա օրվա կամ դրանից հետո: Խնդրում ենք փորձել նորից.")
+            print("The start date must be on or after the current day. Please try again.")
         else:
             break
 
-    # Ստուգել end_date-ի մուտքը
     while True:
-        end_date = input("Խնդրում ենք մուտքագրել ավանդի վերջը (օր/ամիս/տարի): ")
+        end_date = input("Please enter the end date of the deposit (day/month/year): ")
         if not is_valid_date(end_date):
-            print("Վերջ ամսաթվը սխալ ֆորմատով է: Խնդրում ենք մուտքագրել ըստ ձևաչափի՝ օր/ամիս/տարի (օր/ամիս/տարի)")
+            print("The end date is in the wrong format. Please enter it in the format: day/month/year.")
         elif not is_valid_end_date(start_date, end_date):
-            print("Վերջ ամսաթվը պետք է լինի սկիզբ ամսաթվից հետո: Խնդրում ենք փորձել նորից.")
+            print("The end date must be after the start date. Please try again.")
         else:
             break
 
-    # Եթե բոլոր ստուգումները անցան, դուրս ենք գալիս հիմնական while-loop-ից
     break
 
-# Բեռնում ենք WebDriver
+# Loading WebDriver
 service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service)
 
-driver.get("https://www.acba.am/en/calculators/deposit-calculator/deposit-calculator-classic")
+# driver.get("https://www.acba.am/en/calculators/deposit-calculator/deposit-calculator-classic")
+driver.execute_script("window.location.href='https://www.acba.am/en/calculators/deposit-calculator/deposit-calculator-classic'")
 
-# Սպասել, որ էջը բեռնվի և կայքի "amount" դաշտը տեսանելի դառնա (30 վայրկյան)
+# Wait for the page to load and the website's "amount" field to become visible (30 seconds)
 WebDriverWait(driver, 30).until(EC.visibility_of_element_located((By.NAME, "depositSum")))
 
-# Գումարի մուտքագրում
 try:
     amount_input = driver.find_element(By.CSS_SELECTOR, "input[name='depositSum']")
 except Exception as e:
-    print(f"Սխալ կայքում գտնելու ժամանակ: {e}")
+    print(f"Error finding on the website: {e}")
     driver.quit()
     exit()
 
-amount_input.clear()  # Մաքրում ենք դաշտը
-amount_input.send_keys(amount)  # Մուտքագրում ենք ավանդի գումարը
+amount_input.clear()
+amount_input.send_keys(amount) 
 
-# Սկիզբը և վերջը մուտքագրելը
 try:
-    start_input = driver.find_element(By.CSS_SELECTOR, "input[name='depositStartDay']")
-    start_input.clear()  # Մաքրում ենք դաշտը
-    start_input.send_keys(start_date)  # Մուտքագրում ենք սկիզբ ամսաթվը
+    start_input = driver.find_element(By.CSS_SELECTOR, "input[id='depositStartDay']")
+    start_input.send_keys(start_date) 
 except Exception as e:
-    print(f"Սխալ՝ չի գտնվել start_input դաշտը: {e}")
+    print(f"Error: start_input field not found: {e}")
     driver.quit()
     exit()
 
-# try:
-#     end_input = driver.find_element(By.NAME, "depositEndDay")
-#     end_input.clear()  # Մաքրում ենք դաշտը
-#     end_input.send_keys(end_date)  # Մուտքագրում ենք վերջ ամսաթվը
-# except Exception as e:
-#     print(f"Սխալ՝ չի գտնվել end_input դաշտը: {e}")
-#     driver.quit()
-#     exit()
+try:
+    end_input = driver.find_element(By.NAME, "depositEndDay")
+    end_input.send_keys(end_date)  
+except Exception as e:
+    print(f"Error: end_input field not found: {e}")
+    driver.quit()
+    exit()
 
+calculate_button = driver.find_element(By.XPATH, "//input[@type='submit' and @value='Calculate']")
+calculate_button.click()
 
-# # Սեղմել Calculate կոճակը
-# calculate_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Calculate')]")
-# calculate_button.click()
+try:
+    time.sleep(3)  
+    income_field = driver.find_element(By.NAME, "depositTotal")
+    income = income_field.get_attribute("value") 
+    print("Estimated income: ", income)
+except Exception as e:
+    print(f"Error: Income field not found or empty: {e}")
 
-# # Մատուցել եկամուտը
-# time.sleep(3)  # Թույլ տալ բեռնվել վեբ-էլեմենտին
-# income_field = driver.find_element(By.ID, "resultIncome")  # Income դաշտը
-# income = income_field.text  # Եկամուտը կարդալ
-
-# # Արդյունքը MessageBox-ի միջոցով ցուցադրել
-# # ctypes.windll.user32.MessageBoxW(0, f"Եկամուտը. {income}", "Հաշվարկված եկամուտ", 1)
-# # Արդյունքը ցուցադրել console-ում
-# print(f"Եկամուտը: {income}")
-
-# # Բրաուզերը փակել
-# driver.quit()
+# Close browser
+driver.quit()
