@@ -6,6 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime
 import time
+from selenium.webdriver.chrome.options import Options
 
 # Function for format checking
 def is_valid_date(date_str):
@@ -63,12 +64,17 @@ while True:
 
     break
 
+# Activating headless mode
+chrome_options = Options()
+chrome_options.add_argument("--headless") 
+chrome_options.add_argument("--disable-gpu")  
+chrome_options.add_argument("--window-size=1920x1080")
+
 # Loading WebDriver
 service = Service(ChromeDriverManager().install())
-driver = webdriver.Chrome(service=service)
+driver = webdriver.Chrome(service=service, options=chrome_options)
 
-# driver.get("https://www.acba.am/en/calculators/deposit-calculator/deposit-calculator-classic")
-driver.execute_script("window.location.href='https://www.acba.am/en/calculators/deposit-calculator/deposit-calculator-classic'")
+driver.get("https://www.acba.am/en/calculators/deposit-calculator/deposit-calculator-classic")
 
 # Wait for the page to load and the website's "amount" field to become visible (30 seconds)
 WebDriverWait(driver, 30).until(EC.visibility_of_element_located((By.NAME, "depositSum")))
